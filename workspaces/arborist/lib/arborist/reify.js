@@ -12,6 +12,7 @@ const hgi = require('hosted-git-info')
 const rpj = require('read-package-json-fast')
 
 const { dirname, resolve, relative, join } = require('node:path')
+const { existsSync } = require("node:fs")
 const { depth: dfwalk } = require('treeverse')
 const {
   lstat,
@@ -123,10 +124,12 @@ module.exports = cls => class Reifier extends cls {
       // we do NOT want to set ownership on this folder, especially
       // recursively, because it can have other side effects to do that
       // in a project directory.  We just want to make it if it's missing.
-      await mkdir(resolve(this.path), { recursive: true })
+      let resolvedPath = resolve(this.path);
+      if(!existsSync(resolvedPath))
+        await mkdir(resolvedPath, { recursive: true })
 
       // do not allow the top-level node_modules to be a symlink
-      await this.#validateNodeModules(resolve(this.path, 'node_modules'))
+      await this.#validateNodeModules(resolve(resolvedPath, 'node_modules'))
     }
     await this[_loadTrees](options)
 
