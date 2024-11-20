@@ -13,12 +13,12 @@ const rpj = require('read-package-json-fast')
 
 const { dirname, resolve, relative, join } = require('node:path')
 const { depth: dfwalk } = require('treeverse')
-const { existsSync } = require('node:fs')
 const {
   lstat,
   mkdir,
   rm,
   symlink,
+  access,
 } = require('node:fs/promises')
 const { moveFile } = require('@npmcli/fs')
 const PackageJson = require('@npmcli/package-json')
@@ -125,9 +125,14 @@ module.exports = cls => class Reifier extends cls {
       // recursively, because it can have other side effects to do that
       // in a project directory.  We just want to make it if it's missing.
       const resolvedPath = resolve(this.path)
-      if (!existsSync(resolvedPath))
-      {
-        await mkdir(resolvedPath, { recursive: true })
+      try {
+        await access(resolvedPath)
+      } catch (accessError) {
+        if (accessError.code === "ENOENT") {
+          await mkdir(resolvedPath, { recursive: true })
+        } else {
+          throw accessError
+        }
       }
 
       // do not allow the top-level node_modules to be a symlink
