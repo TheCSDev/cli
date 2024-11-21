@@ -128,7 +128,7 @@ module.exports = cls => class Reifier extends cls {
       try {
         await access(resolvedPath)
       } catch (accessError) {
-        if (accessError.code === "ENOENT") {
+        if (accessError.code === 'ENOENT') {
           await mkdir(resolvedPath, { recursive: true })
         } else {
           throw accessError
